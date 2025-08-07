@@ -1,14 +1,17 @@
+#include <sys/stat.h>
+
+#include <sstream>
 #include <string>
 
-#include <TcpServer.h>
-#include <Logger.h>
-#include <sys/stat.h>
-#include <sstream>
 #include "AsyncLogging.h"
 #include "LFU.h"
+#include "Logger.h"
+#include "TcpServer.h"
 #include "memoryPool.h"
-// 日志文件滚动大小为1MB (1*1024*1024字节)
-static const off_t kRollSize = 1*1024*1024;
+
+// Logfile RollSize
+static const off_t kRollSize = 1 * 1024 * 1024;
+
 class EchoServer
 {
 public:
