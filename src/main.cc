@@ -32,10 +32,10 @@ private:
     // New connection established
     // or
     // Existing connection broken
-    void onConnection(const TcpConnectionPtr &conn)   
+    void onConnection(const TcpConnectionPtr &conn)
     {
         if (conn->connected())
-    {
+        {
             LOG_INFO << "Connection UP :" << conn->peerAddress().toIpPort().c_str();
         }
         else
@@ -53,46 +53,50 @@ private:
     TcpServer server_;
     EventLoop *loop_;
 };
-AsyncLogging* g_asyncLog = NULL;
-AsyncLogging * getAsyncLog(){
+
+AsyncLogging *g_asyncLog = NULL;
+AsyncLogging *getAsyncLog()
+{
     return g_asyncLog;
 }
- void asyncLog(const char* msg, int len)
+
+void asyncLog(const char *msg, int len)
 {
-    AsyncLogging* logging = getAsyncLog();
+    AsyncLogging *logging = getAsyncLog();
     if (logging)
     {
         logging->append(msg, len);
     }
 }
-int main(int argc,char *argv[]) {
-    //第一步启动日志，双缓冲异步写入磁盘.
-    //创建一个文件夹
-    const std::string LogDir="logs";
-    mkdir(LogDir.c_str(),0755);
-    //使用std::stringstream 构建日志文件夹
+
+int main(int argc, char *argv[])
+{
+    // 1. Set up log system, double buffering asynchronous write to disk
+    const std::string LogDir = "logs";
+    mkdir(LogDir.c_str(), 0755);
     std::ostringstream LogfilePath;
-    LogfilePath << LogDir << "/" << ::basename(argv[0]); // 完整的日志文件路径
+    LogfilePath << LogDir << "/" << ::basename(argv[0]);
     AsyncLogging log(LogfilePath.str(), kRollSize);
     g_asyncLog = &log;
-    Logger::setOutput(asyncLog); // 为Logger设置输出回调, 重新配接输出位置
-    log.start(); // 开启日志后端线程
-    //第二步启动内存池和LFU缓存
-     // 初始化内存池
-    memoryPool::HashBucket::initMemoryPool();
+    Logger::setOutput(asyncLog);
+    log.start();
 
-    // 初始化缓存
-    const int CAPACITY = 5;  
+    // 2. Set up memory pool and LFU cache
+    memoryPool::HashBucket::initMemoryPool();
+    const int CAPACITY = 5;
     KamaCache::KLfuCache<int, std::string> lfu(CAPACITY);
-    //第三步启动底层网络模块
+
+    // 3. Set up the network module
     EventLoop loop;
     InetAddress addr(8080);
     EchoServer server(&loop, addr, "EchoServer");
     server.start();
- // 主loop开始事件循环  epoll_wait阻塞 等待就绪事件(主loop只注册了监听套接字的fd，所以只会处理新连接事件)
+
+    // 4. Main loop starts the event loop
     std::cout << "================================================Start Web Server================================================" << std::endl;
     loop.loop();
     std::cout << "================================================Stop Web Server=================================================" << std::endl;
-    //结束日志打野
+
+    // 5. Stop log system
     log.stop();
 }
