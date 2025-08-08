@@ -1,6 +1,7 @@
 #pragma once
 #include <string.h>
 #include <string>
+#include "noncopyable.h"
 // 类的前置声明
 class AsyncLogging;
 constexpr int kSmallBufferSize = 4000;

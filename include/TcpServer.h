@@ -27,8 +27,8 @@ public:
 
     enum Option
     {
-        kNoReusePort,//不允许重用本地端口
-        kReusePort,//允许重用本地端口
+        kNoReusePort, // 不允许重用本地端口
+        kReusePort,   // 允许重用本地端口
     };
 
     TcpServer(EventLoop *loop,
@@ -67,12 +67,12 @@ private:
 
     std::shared_ptr<EventLoopThreadPool> threadPool_; // one loop per thread
 
-    ConnectionCallback connectionCallback_;       //有新连接时的回调
+    ConnectionCallback connectionCallback_;       // 有新连接时的回调
     MessageCallback messageCallback_;             // 有读写事件发生时的回调
     WriteCompleteCallback writeCompleteCallback_; // 消息发送完成后的回调
 
     ThreadInitCallback threadInitCallback_; // loop线程初始化的回调
-    int numThreads_;//线程池中线程的数量。
+    int numThreads_;                        // 线程池中线程的数量。
     std::atomic_int started_;
     int nextConnId_;
     ConnectionMap connections_; // 保存所有的连接
