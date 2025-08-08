@@ -4,7 +4,7 @@
 #include <string>
 
 #include "AsyncLogging.h"
-#include "LFU.h"
+#include "RainLfu.h"
 #include "Logger.h"
 #include "TcpServer.h"
 #include "memoryPool.h"
@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
     // 2. Set up memory pool and LFU cache
     memoryPool::HashBucket::initMemoryPool();
     const int CAPACITY = 5;
-    KamaCache::KLfuCache<int, std::string> lfu(CAPACITY);
+    RainCache::RainLfu<int, std::string> lfu(CAPACITY);
 
     // 3. Set up the network module
     EventLoop loop;
