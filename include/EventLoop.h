@@ -98,7 +98,7 @@ private:
     // Return all active channels(events happened)
     ChannelList activeChannels_;
 
-    // Is current loop has pending callback functions to execute?
+    // Is current loop executing callback functions?
     std::atomic_bool callingPendingFunctors_;
     // Save pending callback functions
     std::vector<Functor> pendingFunctors_;
