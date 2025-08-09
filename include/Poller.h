@@ -1,15 +1,16 @@
 #pragma once
 
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
-#include "noncopyable.h"
 #include "Timestamp.h"
+#include "noncopyable.h"
 
 class Channel;
 class EventLoop;
 
-// muduo库中多路事件分发器的核心IO复用模块
+// muduo Core
+// Multi-Channel Event Dispatcher I/O Multiplexing Module
 class Poller
 {
 public:
@@ -18,22 +19,24 @@ public:
     Poller(EventLoop *loop);
     virtual ~Poller() = default;
 
-    // 给所有IO复用保留统一的接口
+    // Abstract interface for poller
     virtual Timestamp poll(int timeoutMs, ChannelList *activeChannels) = 0;
     virtual void updateChannel(Channel *channel) = 0;
     virtual void removeChannel(Channel *channel) = 0;
 
-    // 判断参数channel是否在当前的Poller当中
+    // Check if the channel is in the current poller
     bool hasChannel(Channel *channel) const;
 
-    // EventLoop可以通过该接口获取默认的IO复用的具体实现
+    // EventLoop can get the default IO multiplexing implementation through this interface
     static Poller *newDefaultPoller(EventLoop *loop);
 
 protected:
-    // map的key:sockfd value:sockfd所属的channel通道类型
+    // Key: socket file descriptor
+    // Value: corresponding channel object
     using ChannelMap = std::unordered_map<int, Channel *>;
     ChannelMap channels_;
 
 private:
-    EventLoop *ownerLoop_; // 定义Poller所属的事件循环EventLoop
+    // Poller event loop
+    EventLoop *ownerLoop_;
 };
