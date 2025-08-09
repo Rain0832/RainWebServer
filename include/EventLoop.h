@@ -10,54 +10,60 @@
 #include "TimerQueue.h"
 #include "Timestamp.h"
 #include "noncopyable.h"
+
 class Channel;
 class Poller;
 
-// 事件循环类 主要包含了两个大模块 Channel Poller(epoll的抽象)
+// Contain 2 modules: Channel and Poller(epoll)
 class EventLoop : noncopyable
 {
 public:
+    // Function object
     using Functor = std::function<void()>;
 
     EventLoop();
     ~EventLoop();
 
-    // 开启事件循环
+    // Set up the loop
     void loop();
-    // 退出事件循环
+    // Stop the loop
     void quit();
 
     Timestamp pollReturnTime() const { return pollRetureTime_; }
 
-    // 在当前loop中执行
+    // Run in current loop
     void runInLoop(Functor cb);
-    // 把上层注册的回调函数cb放入队列中 唤醒loop所在的线程执行cb
+
+    // Put upper call back function cb into queue,
+    // wake up the running loop's threadto execute cb
     void queueInLoop(Functor cb);
 
-    // 通过eventfd唤醒loop所在的线程
+    // Write data to wakeupFd_(Read event) to wake up the loop thread
     void wakeup();
 
-    // EventLoop的方法 => Poller的方法
+    // Encapsulation method for Poller
     void updateChannel(Channel *channel);
     void removeChannel(Channel *channel);
     bool hasChannel(Channel *channel);
 
-    // 判断EventLoop对象是否在自己的线程里
-    bool isInLoopThread() const { return threadId_ == CurrentThread::tid(); } // threadId_为EventLoop创建时的线程id CurrentThread::tid()为当前线程id
-    /**
-     * 定时任务相关函数
-     */
+    // Judge EventLoop object is in thread of itself
+    // threadId_ is CurrentThread::tid() when EventLoop is created
+    bool isInLoopThread() const { return threadId_ == CurrentThread::tid(); }
+
+    // Scheduled task: Run at a specific time point
     void runAt(Timestamp timestamp, Functor &&cb)
     {
         timerQueue_->addTimer(std::move(cb), timestamp, 0.0);
     }
 
+    // Scheduled task: Run after a specific time interval
     void runAfter(double waitTime, Functor &&cb)
     {
         Timestamp time(addTime(Timestamp::now(), waitTime));
         runAt(time, std::move(cb));
     }
 
+    // Scheduled task: Run every specific time interval
     void runEvery(double interval, Functor &&cb)
     {
         Timestamp timestamp(addTime(Timestamp::now(), interval));
@@ -65,25 +71,37 @@ public:
     }
 
 private:
-    void handleRead();        // 给eventfd返回的文件描述符wakeupFd_绑定的事件回调 当wakeup()时 即有事件发生时 调用handleRead()读wakeupFd_的8字节 同时唤醒阻塞的epoll_wait
-    void doPendingFunctors(); // 执行上层回调
+    // Read wakeupFd_ to wake up blocked epoll_wait
+    void handleWakeupRead();
+    // Call pending callback functions
+    void doPendingFunctors();
 
     using ChannelList = std::vector<Channel *>;
 
-    std::atomic_bool looping_; // 原子操作 底层通过CAS实现
-    std::atomic_bool quit_;    // 标识退出loop循环
+    std::atomic_bool looping_;
+    // Quit from the loop
+    std::atomic_bool quit_;
 
-    const pid_t threadId_; // 记录当前EventLoop是被哪个线程id创建的 即标识了当前EventLoop的所属线程id
+    // Record current EventLoop created by which thread
+    const pid_t threadId_;
 
-    Timestamp pollRetureTime_; // Poller返回发生事件的Channels的时间点
+    // Poller return Event Channels time point
+    Timestamp pollRetureTime_;
     std::unique_ptr<Poller> poller_;
     std::unique_ptr<TimerQueue> timerQueue_;
-    int wakeupFd_; // 作用：当mainLoop获取一个新用户的Channel 需通过轮询算法选择一个subLoop 通过该成员唤醒subLoop处理Channel
+
+    // When mainLoop get new Channel, use poll() to select a subLoop
+    // Use wakeupFd_ to wake up subLoop
+    int wakeupFd_;
     std::unique_ptr<Channel> wakeupChannel_;
 
-    ChannelList activeChannels_; // 返回Poller检测到当前有事件发生的所有Channel列表
+    // Return all active channels(events happened)
+    ChannelList activeChannels_;
 
-    std::atomic_bool callingPendingFunctors_; // 标识当前loop是否有需要执行的回调操作
-    std::vector<Functor> pendingFunctors_;    // 存储loop需要执行的所有回调操作
-    std::mutex mutex_;                        // 互斥锁 用来保护上面vector容器的线程安全操作
+    // Is current loop has pending callback functions to execute?
+    std::atomic_bool callingPendingFunctors_;
+    // Save pending callback functions
+    std::vector<Functor> pendingFunctors_;
+    // Lock protect the vector container
+    std::mutex mutex_;
 };
