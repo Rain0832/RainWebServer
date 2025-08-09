@@ -4,7 +4,7 @@
 #include <netinet/in.h>
 #include <string>
 
-// 封装socket地址类型
+// Capsulation of socket address type
 class InetAddress
 {
 public:
@@ -14,8 +14,11 @@ public:
     {
     }
 
+    // Convert binary IP address to string format
     std::string toIp() const;
+    // Convert binary IP address and port to string format
     std::string toIpPort() const;
+    // Get port number
     uint16_t toPort() const;
 
     const sockaddr_in *getSockAddr() const { return &addr_; }
