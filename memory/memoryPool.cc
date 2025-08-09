@@ -9,13 +9,13 @@ namespace memoryPool
 
     MemoryPool::~MemoryPool()
     {
-        // 把连续的block删除
+        // Delete all the blocks
         Slot *cur = firstBlock_;
         while (cur)
         {
             Slot *next = cur->next;
-            // 等同于 free(reinterpret_cast<void*>(firstBlock_));
-            // 转化为 void 指针，因为 void 类型不需要调用析构函数，只释放空间
+            // Equal with: free(reinterpret_cast<void*>(firstBlock_));
+            // Cast it to void*, because void type doesn't need destructor, just release memory
             operator delete(reinterpret_cast<void *>(cur));
             cur = next;
         }
@@ -33,7 +33,7 @@ namespace memoryPool
 
     void *MemoryPool::allocate()
     {
-        // 优先使用空闲链表中的内存槽
+        // Use free list first
         if (freeList_ != nullptr)
         {
             {
@@ -50,14 +50,16 @@ namespace memoryPool
         Slot *temp;
         {
             std::lock_guard<std::mutex> lock(mutexForBlock_);
+
+            // Current memory block has no available slots, allocate a new block
             if (curSlot_ >= lastSlot_)
             {
-                // 当前内存块已无内存槽可用，开辟一块新的内存
                 allocateNewBlock();
             }
 
             temp = curSlot_;
-            // 这里不能直接 curSlot_ += SlotSize_ 因为curSlot_是Slot*类型，所以需要除以SlotSize_再加1
+
+            // Can not use curSlot_ += SlotSize_ because curSlot_ is a Slot* type, so we need to divide it by SlotSize_
             curSlot_ += SlotSize_ / sizeof(Slot);
         }
 
@@ -68,7 +70,7 @@ namespace memoryPool
     {
         if (ptr)
         {
-            // 回收内存，将内存通过头插法插入到空闲链表中
+            // Collect memory, insert it into the free list by head insertion
             std::lock_guard<std::mutex> lock(mutexForFreeList_);
             reinterpret_cast<Slot *>(ptr)->next = freeList_;
             freeList_ = reinterpret_cast<Slot *>(ptr);
@@ -77,26 +79,26 @@ namespace memoryPool
 
     void MemoryPool::allocateNewBlock()
     {
-        // std::cout << "申请一块内存块，SlotSize: " << SlotSize_ << std::endl;
-        //  头插法插入新的内存块
+        // std::cout << "Apply for new memory block, BlockSize: " << BlockSize_ << "，SlotSize: " << SlotSize_ << std::endl;
+        //  Insert a new memory block by head insertion
         void *newBlock = operator new(BlockSize_);
         reinterpret_cast<Slot *>(newBlock)->next = firstBlock_;
         firstBlock_ = reinterpret_cast<Slot *>(newBlock);
 
         char *body = reinterpret_cast<char *>(newBlock) + sizeof(Slot *);
-        size_t paddingSize = padPointer(body, SlotSize_); // 计算对齐需要填充内存的大小
+        size_t paddingSize = padPointer(body, SlotSize_); // Compute padding size
         curSlot_ = reinterpret_cast<Slot *>(body + paddingSize);
 
-        // 超过该标记位置，则说明该内存块已无内存槽可用，需向系统申请新的内存块
+        // If beyound the last slot, has no available slots, need to allocate a new block from system
         lastSlot_ = reinterpret_cast<Slot *>(reinterpret_cast<size_t>(newBlock) + BlockSize_ - SlotSize_ + 1);
 
         freeList_ = nullptr;
     }
 
-    // 让指针对齐到槽大小的倍数位置
+    // Let pointer pad to the next multiple of slot size
     size_t MemoryPool::padPointer(char *p, size_t align)
     {
-        // align 是槽大小
+        // align is slot size
         return (align - reinterpret_cast<size_t>(p)) % align;
     }
 
@@ -108,7 +110,7 @@ namespace memoryPool
         }
     }
 
-    // 单例模式
+    // Design Pattern: Singleton mode
     MemoryPool &HashBucket::getMemoryPool(int index)
     {
         static MemoryPool memoryPool[MEMORY_POOL_NUM];
