@@ -31,7 +31,7 @@ public:
 
     Timestamp pollReturnTime() const { return pollRetureTime_; }
 
-    // Run in current loop
+    // Run callback function in current loop
     void runInLoop(Functor cb);
 
     // Put upper call back function cb into queue,
