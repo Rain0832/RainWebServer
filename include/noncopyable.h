@@ -1,14 +1,14 @@
-#pragma once // 防止头文件重复包含
+#pragma once
 
-/**
- * noncopyable被继承后 派生类对象可正常构造和析构 但派生类对象无法进行拷贝构造和赋值构造
- **/
+// the inheritance classof noncopyable will make the derived class object
+// can be constructed and destructed normally,
+// but cannot perform copy construction and assignment construction
 class noncopyable
 {
 public:
     noncopyable(const noncopyable &) = delete;
-    noncopyable &operator=(const noncopyable &) = delete;
-    // void operator=(const noncopyable &) = delete;    // muduo将返回值变为void 这其实无可厚非
+    noncopyable &operator=(const noncopyable &) = delete; // or void operator=(const noncopyable &) = delete; to forbid the chaining assignment
+
 protected:
     noncopyable() = default;
     ~noncopyable() = default;
