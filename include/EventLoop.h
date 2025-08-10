@@ -9,13 +9,13 @@
 #include "CurrentThread.h"
 #include "TimerQueue.h"
 #include "Timestamp.h"
-#include "noncopyable.h"
+#include "Noncopyable.h"
 
 class Channel;
 class Poller;
 
 // Contain 2 modules: Channel and Poller(epoll)
-class EventLoop : noncopyable
+class EventLoop : Noncopyable
 {
 public:
     // Function object
