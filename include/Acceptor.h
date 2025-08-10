@@ -2,33 +2,36 @@
 
 #include <functional>
 
-#include "noncopyable.h"
-#include "Socket.h"
 #include "Channel.h"
+#include "Noncopyable.h"
+#include "Socket.h"
 
 class EventLoop;
 class InetAddress;
 
-class Acceptor : noncopyable
+class Acceptor : Noncopyable
 {
 public:
     using NewConnectionCallback = std::function<void(int sockfd, const InetAddress &)>;
 
     Acceptor(EventLoop *loop, const InetAddress &listenAddr, bool reuseport);
     ~Acceptor();
-    //设置新连接的回调函数
+
+    // Set new connection callback function
     void setNewConnectionCallback(const NewConnectionCallback &cb) { NewConnectionCallback_ = cb; }
-    // 判断是否在监听
+
+    // Judge whether the Acceptor is listening
     bool listenning() const { return listenning_; }
-    // 监听本地端口
+
+    // Listen local port
     void listen();
 
 private:
-    void handleRead();//处理新用户的连接事件
+    void handleRead(); // Process new user connection event
 
-    EventLoop *loop_; // Acceptor用的就是用户定义的那个baseLoop 也称作mainLoop
-    Socket acceptSocket_;//专门用于接收新连接的socket
-    Channel acceptChannel_;//专门用于监听新连接的channel
-    NewConnectionCallback NewConnectionCallback_;//新连接的回调函数
-    bool listenning_;//是否在监听
+    EventLoop *loop_;                             // Acceptor use user-defined baseLoop, also mainLoop
+    Socket acceptSocket_;                         // Accept new connection socket
+    Channel acceptChannel_;                       // Use to listen connection
+    NewConnectionCallback NewConnectionCallback_; // New connection callback
+    bool listenning_;                             // is listening now?
 };
