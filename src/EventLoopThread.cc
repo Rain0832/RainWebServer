@@ -1,14 +1,9 @@
-#include <EventLoopThread.h>
-#include <EventLoop.h>
+#include "EventLoop.h"
+#include "EventLoopThread.h"
 
 EventLoopThread::EventLoopThread(const ThreadInitCallback &cb,
                                  const std::string &name)
-    : loop_(nullptr)
-    , exiting_(false)
-    , thread_(std::bind(&EventLoopThread::threadFunc, this), name)
-    , mutex_()
-    , cond_()
-    , callback_(cb)
+    : loop_(nullptr), exiting_(false), thread_(std::bind(&EventLoopThread::threadFunc, this), name), mutex_(), cond_(), callback_(cb)
 {
 }
 
@@ -24,21 +19,23 @@ EventLoopThread::~EventLoopThread()
 
 EventLoop *EventLoopThread::startLoop()
 {
-    thread_.start(); // 启用底层线程Thread类对象thread_中通过start()创建的线程
+    thread_.start(); // Start bottom level Thread object thread_
 
     EventLoop *loop = nullptr;
     {
         std::unique_lock<std::mutex> lock(mutex_);
-        cond_.wait(lock, [this](){return loop_ != nullptr;});
+        cond_.wait(lock, [this]()
+                   { return loop_ != nullptr; });
         loop = loop_;
     }
     return loop;
 }
 
-// 下面这个方法 是在单独的新线程里运行的
 void EventLoopThread::threadFunc()
 {
-    EventLoop loop; // 创建一个独立的EventLoop对象 和上面的线程是一一对应的 级one loop per thread
+    // Create a independent EventLoop object for this thread
+    // One EventLoop object per thread
+    EventLoop loop;
 
     if (callback_)
     {
@@ -50,7 +47,7 @@ void EventLoopThread::threadFunc()
         loop_ = &loop;
         cond_.notify_one();
     }
-    loop.loop();    // 执行EventLoop的loop() 开启了底层的Poller的poll()
+    loop.loop(); // Execute EventLoop::loop(), set up bottom level Poller poll()
     std::unique_lock<std::mutex> lock(mutex_);
     loop_ = nullptr;
 }
