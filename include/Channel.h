@@ -3,14 +3,14 @@
 #include <functional>
 #include <memory>
 
-#include "noncopyable.h"
+#include "Noncopyable.h"
 #include "Timestamp.h"
 
 class EventLoop;
 
 // One Channel encapsulates: socketfd, event(like EPOLLIN, EPOLLOUT...),
 // It also binds the specific event returned by the poller.
-class Channel : noncopyable
+class Channel : Noncopyable
 {
 public:
     using EventCallback = std::function<void()>;
