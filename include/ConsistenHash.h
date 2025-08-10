@@ -1,99 +1,106 @@
 #pragma once
-#include <vector>
-#include <unordered_map>
-#include <string>
-#include <functional>
+
 #include <algorithm>
+#include <functional>
 #include <mutex>
 #include <stdexcept>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 /**
  * @class ConsistentHash
- * @brief 实现一致性哈希算法的类。
+ * @brief Implements the consistent hash algorithm class
  *
- * 一致性哈希是一种分布式哈希技术，旨在最小化在节点添加或移除时键的重新分配。
- * 常用于分布式缓存系统和分布式数据库分片等场景。
+ * ConsistentHash is a distributed hash algorithm that
+ * aims to minimize the redistribution of keys when nodes are added or removed.
+ * Usually used in distributed caching systems and sharding of distributed databases.
  */
-class ConsistentHash {
+class ConsistentHash
+{
 public:
     /**
-     * @brief 构造函数
-     * @param numReplicas 每个物理节点的虚拟节点数量，增加虚拟节点可改善负载均衡效果。
-     * @param hashFunc 可选的自定义哈希函数，默认为 std::hash。
+     * @brief Constructor.
+     * @param numReplicas Virtual nodes number per physical node, add virtual nodes can improve load balancing effect
+     * @param hashFunc Optional custom hash function, default is std::hash
      */
-    ConsistentHash(size_t numReplicas, std::function<size_t(const std::string&)> hashFunc = std::hash<std::string>())
+    ConsistentHash(size_t numReplicas, std::function<size_t(const std::string &)> hashFunc = std::hash<std::string>())
         : numReplicas_(numReplicas), hashFunction_(hashFunc) {}
 
     /**
-     * @brief 向哈希环中添加一个节点。
+     * @brief Add a node to the hash ring
+     * Every node is replicated as several virtual nodes, every virtual node is calculated by `node + index`(unique hash value)
+     * Theses hash values are stored in the hash ring and sorted for efficient lookup.
      *
-     * 每个节点会被复制为若干个虚拟节点。每个虚拟节点通过 `node + index` 计算出唯一的哈希值。
-     * 这些哈希值存储在哈希环上，并进行排序以便高效查找。
-     *
-     * @param node 要添加的节点名称（如服务器地址）。
+     * @param node To add node name(like server address)
      */
-    void addNode(const std::string& node) {
-        std::lock_guard<std::mutex> lock(mtx_); // 确保多线程安全
-        for (size_t i = 0; i < numReplicas_; ++i) {
-            // 为每个虚拟节点计算唯一哈希值
-            size_t hash = hashFunction_(node +"_0"+std::to_string(i));
-            circle_[hash] = node;         // 哈希值映射到节点
-            sortedHashes_.push_back(hash); // 添加到排序列表
+    void addNode(const std::string &node)
+    {
+        std::lock_guard<std::mutex> lock(mtx_);
+        for (size_t i = 0; i < numReplicas_; ++i)
+        {
+            // Caculate unique hash value for each virtual node
+            size_t hash = hashFunction_(node + "_0" + std::to_string(i));
+            circle_[hash] = node;          // Hash value map to node
+            sortedHashes_.push_back(hash); // Add to sorted hash list
         }
-        // 对哈希值进行排序
+        // Sort hash values
         std::sort(sortedHashes_.begin(), sortedHashes_.end());
     }
 
     /**
-     * @brief 从哈希环中移除一个节点。
+     * @brief Remove a node from the hash ring
+     * Remove all virtual nodes and their corresponding hash values of the node.
      *
-     * 删除该节点的所有虚拟节点及其对应的哈希值。
-     *
-     * @param node 要移除的节点名称。
+     * @param node To remove node name
      */
-    void removeNode(const std::string& node) {
-        std::lock_guard<std::mutex> lock(mtx_); // 确保多线程安全
-        for (size_t i = 0; i < numReplicas_; ++i) {
-            // 计算虚拟节点的哈希值
+    void removeNode(const std::string &node)
+    {
+        std::lock_guard<std::mutex> lock(mtx_);
+        for (size_t i = 0; i < numReplicas_; ++i)
+        {
+            // Calculate hash value for virtual node
             size_t hash = hashFunction_(node + std::to_string(i));
-            circle_.erase(hash); // 从哈希环中删除该哈希
+            circle_.erase(hash); // Remove from hash ring
             auto it = std::find(sortedHashes_.begin(), sortedHashes_.end(), hash);
-            if (it != sortedHashes_.end()) {
-                sortedHashes_.erase(it); // 从排序列表中删除
+            if (it != sortedHashes_.end())
+            {
+                sortedHashes_.erase(it); // Remove from sorted hash list
             }
         }
     }
 
     /**
-     * @brief 查找负责处理给定键的节点。
+     * @brief Find the node responsible for handling the given key
+     * Find the first node in the hash ring with a hash value greater than or equal to the key hash value.
+     * If not found (exceeds the maximum value of the hash ring), wrap around to the first node.
      *
-     * 根据键的哈希值在哈希环中查找第一个大于等于该值的节点。
-     * 如果没有找到（即超出哈希环最大值），则回绕到第一个节点。
-     *
-     * @param key 要查找的键（如数据的标识符）。
-     * @return 负责处理该键的节点名称。
-     * @throws std::runtime_error 如果哈希环为空（没有节点）。
+     * @param key To find key(like data identifier)
+     * @return Node name responsible for handling the key
+     * @throws std::runtime_error If the hash ring is empty(no nodes)
      */
-
-    size_t getNode(const std::string& key) {
-    std::lock_guard<std::mutex> lock(mtx_); // 确保多线程安全
-    if (circle_.empty()) {
-        throw std::runtime_error("No nodes in consistent hash"); // 环为空时抛出异常
-    }
-    size_t hash = hashFunction_(key); // 计算键的哈希值
-    // 在已排序的哈希列表中找到第一个大于键哈希值的位置
-    auto it = std::upper_bound(sortedHashes_.begin(), sortedHashes_.end(), hash);
-    if (it == sortedHashes_.end()) {
-        // 如果超出环最大值，则回绕到第一个节点
-        it = sortedHashes_.begin();
-    }
-    return *it; // 返回对应的哈希值
+    size_t getNode(const std::string &key)
+    {
+        std::lock_guard<std::mutex> lock(mtx_);
+        if (circle_.empty())
+        {
+            throw std::runtime_error("No nodes in consistent hash");
+        }
+        size_t hash = hashFunction_(key); // Calculate key hash value
+        // Find the first position in the sorted hash list with a hash value greater than or equal to the key hash value
+        auto it = std::upper_bound(sortedHashes_.begin(), sortedHashes_.end(), hash);
+        if (it == sortedHashes_.end())
+        {
+            // If exceeds the maximum value of the hash ring, wrap around to the first node
+            it = sortedHashes_.begin();
+        }
+        return *it; // Return corresponding hash value
     }
 
 private:
-    size_t numReplicas_; // 每个物理节点的虚拟节点数量
-    std::function<size_t(const std::string&)> hashFunction_; // 用户自定义或默认的哈希函数
-    std::unordered_map<size_t, std::string> circle_; // 哈希值到节点名称的映射
-    std::vector<size_t> sortedHashes_; // 排序的哈希值列表，用于高效查找
-    std::mutex mtx_; // 保护哈希环的互斥锁，确保多线程安全
+    size_t numReplicas_;                                      // Number of virtual nodes per physical node
+    std::function<size_t(const std::string &)> hashFunction_; // Custom or default hash function
+    std::unordered_map<size_t, std::string> circle_;          // Hash value to node name mapping
+    std::vector<size_t> sortedHashes_;                        // Sorted hash value list for efficient lookup
+    std::mutex mtx_;                                          // Mutex to protect hash ring, ensuring thread safety
 };
