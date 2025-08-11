@@ -1,15 +1,16 @@
 #pragma once
 
-#include <functional>
-#include <thread>
-#include <memory>
 #include <unistd.h>
-#include <string>
+
 #include <atomic>
+#include <functional>
+#include <memory>
+#include <string>
+#include <thread>
 
-#include "noncopyable.h"
+#include "Noncopyable.h"
 
-class Thread : noncopyable
+class Thread : Noncopyable
 {
 public:
     using ThreadFunc = std::function<void()>;
@@ -32,8 +33,8 @@ private:
     bool started_;
     bool joined_;
     std::shared_ptr<std::thread> thread_;
-    pid_t tid_;       // 在线程创建时再绑定
-    ThreadFunc func_; // 线程回调函数
+    pid_t tid_;       // Bind when thread created
+    ThreadFunc func_; // Thread callback function
     std::string name_;
     static std::atomic_int numCreated_;
 };
