@@ -8,7 +8,7 @@
 #include "Callbacks.h"
 #include "InetAddress.h"
 #include "Timestamp.h"
-#include "noncopyable.h"
+#include "Noncopyable.h"
 
 class Channel;
 class EventLoop;
@@ -16,7 +16,7 @@ class Socket;
 
 // TcpServer => Acceptor => New user connection, get connfd by accept function
 // => TcpConnection set callbacks => set to Channel => Poller => Channel callback
-class TcpConnection : noncopyable, public std::enable_shared_from_this<TcpConnection>
+class TcpConnection : Noncopyable, public std::enable_shared_from_this<TcpConnection>
 {
 public:
     TcpConnection(EventLoop *loop,
@@ -43,18 +43,22 @@ public:
     {
         connectionCallback_ = cb;
     }
+
     void setMessageCallback(const MessageCallback &cb)
     {
         messageCallback_ = cb;
     }
+
     void setWriteCompleteCallback(const WriteCompleteCallback &cb)
     {
         writeCompleteCallback_ = cb;
     }
+
     void setCloseCallback(const CloseCallback &cb)
     {
         closeCallback_ = cb;
     }
+
     void setHighWaterMarkCallback(const HighWaterMarkCallback &cb, size_t highWaterMark)
     {
         highWaterMarkCallback_ = cb;
