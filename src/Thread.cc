@@ -1,7 +1,7 @@
-#include <Thread.h>
-#include <CurrentThread.h>
-
 #include <semaphore.h>
+
+#include "CurrentThread.h"
+#include "Thread.h"
 
 std::atomic_int Thread::numCreated_(0);
 

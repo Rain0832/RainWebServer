@@ -1,8 +1,8 @@
-#include <CurrentThread.h>
+#include "CurrentThread.h"
 
 namespace CurrentThread
 {
-      thread_local int t_cachedTid = 0; // 在源文件中定义线程局部变量
+    thread_local int t_cachedTid = 0; // 在源文件中定义线程局部变量
     void cacheTid()
     {
         if (t_cachedTid == 0)

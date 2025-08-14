@@ -1,12 +1,14 @@
-#include <EventLoop.h>
-#include <Channel.h>
-#include <Logger.h>
-#include <Timer.h>
-#include <TimerQueue.h>
+#include <unistd.h>
 
 #include <sys/timerfd.h>
-#include <unistd.h>
+
 #include <string.h>
+
+#include "Channel.h"
+#include "EventLoop.h"
+#include "Logger.h"
+#include "Timer.h"
+#include "TimerQueue.h"
 
 int createTimerfd()
 {
@@ -15,7 +17,7 @@ int createTimerfd()
      * TFD_NONBLOCK：非阻塞
      */
     int timerfd = ::timerfd_create(CLOCK_MONOTONIC,
-                                    TFD_NONBLOCK | TFD_CLOEXEC);
+                                   TFD_NONBLOCK | TFD_CLOEXEC);
     if (timerfd < 0)
     {
         LOG_ERROR << "Failed in timerfd_create";
@@ -23,7 +25,7 @@ int createTimerfd()
     return timerfd;
 }
 
-TimerQueue::TimerQueue(EventLoop* loop)
+TimerQueue::TimerQueue(EventLoop *loop)
     : loop_(loop),
       timerfd_(createTimerfd()),
       timerfdChannel_(loop_, timerfd_),
@@ -35,12 +37,12 @@ TimerQueue::TimerQueue(EventLoop* loop)
 }
 
 TimerQueue::~TimerQueue()
-{   
+{
     timerfdChannel_.disableAll();
     timerfdChannel_.remove();
     ::close(timerfd_);
     // 删除所有定时器
-    for (const Entry& timer : timers_)
+    for (const Entry &timer : timers_)
     {
         delete timer.second;
     }
@@ -50,12 +52,12 @@ void TimerQueue::addTimer(TimerCallback cb,
                           Timestamp when,
                           double interval)
 {
-    Timer* timer = new Timer(std::move(cb), when, interval);
+    Timer *timer = new Timer(std::move(cb), when, interval);
     loop_->runInLoop(
         std::bind(&TimerQueue::addTimerInLoop, this, timer));
 }
 
-void TimerQueue::addTimerInLoop(Timer* timer)
+void TimerQueue::addTimerInLoop(Timer *timer)
 {
     // 是否取代了最早的定时触发时间
     bool eraliestChanged = insert(timer);
@@ -95,12 +97,13 @@ void TimerQueue::resetTimerfd(int timerfd_, Timestamp expiration)
     }
 }
 
-void ReadTimerFd(int timerfd) 
+void ReadTimerFd(int timerfd)
 {
     uint64_t read_byte;
     ssize_t readn = ::read(timerfd, &read_byte, sizeof(read_byte));
-    
-    if (readn != sizeof(read_byte)) {
+
+    if (readn != sizeof(read_byte))
+    {
         LOG_ERROR << "TimerQueue::ReadTimerFd read_size < 0";
     }
 }
@@ -109,11 +112,11 @@ void ReadTimerFd(int timerfd)
 std::vector<TimerQueue::Entry> TimerQueue::getExpired(Timestamp now)
 {
     std::vector<Entry> expired;
-    Entry sentry(now, reinterpret_cast<Timer*>(UINTPTR_MAX));
+    Entry sentry(now, reinterpret_cast<Timer *>(UINTPTR_MAX));
     TimerList::iterator end = timers_.lower_bound(sentry);
     std::copy(timers_.begin(), end, back_inserter(expired));
     timers_.erase(timers_.begin(), end);
-    
+
     return expired;
 }
 
@@ -126,21 +129,20 @@ void TimerQueue::handleRead()
 
     // 遍历到期的定时器，调用回调函数
     callingExpiredTimers_ = true;
-    for (const Entry& it : expired)
+    for (const Entry &it : expired)
     {
         it.second->run();
     }
     callingExpiredTimers_ = false;
-    
+
     // 重新设置这些定时器
     reset(expired, now);
-
 }
 
-void TimerQueue::reset(const std::vector<Entry>& expired, Timestamp now)
+void TimerQueue::reset(const std::vector<Entry> &expired, Timestamp now)
 {
     Timestamp nextExpire;
-    for (const Entry& it : expired)
+    for (const Entry &it : expired)
     {
         // 重复任务则继续执行
         if (it.second->repeat())
@@ -162,7 +164,7 @@ void TimerQueue::reset(const std::vector<Entry>& expired, Timestamp now)
     }
 }
 
-bool TimerQueue::insert(Timer* timer)
+bool TimerQueue::insert(Timer *timer)
 {
     bool earliestChanged = false;
     Timestamp when = timer->expiration();

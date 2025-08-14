@@ -1,15 +1,15 @@
 #include <functional>
 #include <string.h>
 
-#include <TcpServer.h>
-#include <Logger.h>
-#include <TcpConnection.h>
+#include "TcpServer.h"
+#include "Logger.h"
+#include "TcpConnection.h"
 
 static EventLoop *CheckLoopNotNull(EventLoop *loop)
 {
     if (loop == nullptr)
     {
-        LOG_FATAL<<"main Loop is NULL!";
+        LOG_FATAL << "main Loop is NULL!";
     }
     return loop;
 }
@@ -18,15 +18,7 @@ TcpServer::TcpServer(EventLoop *loop,
                      const InetAddress &listenAddr,
                      const std::string &nameArg,
                      Option option)
-    : loop_(CheckLoopNotNull(loop))
-    , ipPort_(listenAddr.toIpPort())
-    , name_(nameArg)
-    , acceptor_(new Acceptor(loop, listenAddr, option == kReusePort))
-    , threadPool_(new EventLoopThreadPool(loop, name_))
-    , connectionCallback_()
-    , messageCallback_()
-    , nextConnId_(1)
-    , started_(0)
+    : loop_(CheckLoopNotNull(loop)), ipPort_(listenAddr.toIpPort()), name_(nameArg), acceptor_(new Acceptor(loop, listenAddr, option == kReusePort)), threadPool_(new EventLoopThreadPool(loop, name_)), connectionCallback_(), messageCallback_(), nextConnId_(1), started_(0)
 {
     // 当有新用户连接时，Acceptor类中绑定的acceptChannel_会有读事件发生，执行handleRead()调用TcpServer::newConnection回调
     acceptor_->setNewConnectionCallback(
@@ -35,10 +27,10 @@ TcpServer::TcpServer(EventLoop *loop,
 
 TcpServer::~TcpServer()
 {
-    for(auto &item : connections_)
+    for (auto &item : connections_)
     {
         TcpConnectionPtr conn(item.second);
-        item.second.reset();    // 把原始的智能指针复位 让栈空间的TcpConnectionPtr conn指向该对象 当conn出了其作用域 即可释放智能指针指向的对象
+        item.second.reset(); // 把原始的智能指针复位 让栈空间的TcpConnectionPtr conn指向该对象 当conn出了其作用域 即可释放智能指针指向的对象
         // 销毁连接
         conn->getLoop()->runInLoop(
             std::bind(&TcpConnection::connectDestroyed, conn));
@@ -48,16 +40,16 @@ TcpServer::~TcpServer()
 // 设置底层subloop的个数
 void TcpServer::setThreadNum(int numThreads)
 {
-    int numThreads_=numThreads;
+    int numThreads_ = numThreads;
     threadPool_->setThreadNum(numThreads_);
 }
 
 // 开启服务器监听
 void TcpServer::start()
 {
-    if (started_.fetch_add(1) == 0)    // 防止一个TcpServer对象被start多次
+    if (started_.fetch_add(1) == 0) // 防止一个TcpServer对象被start多次
     {
-        threadPool_->start(threadInitCallback_);    // 启动底层的loop线程池
+        threadPool_->start(threadInitCallback_); // 启动底层的loop线程池
         loop_->runInLoop(std::bind(&Acceptor::listen, acceptor_.get()));
     }
 }
@@ -69,18 +61,18 @@ void TcpServer::newConnection(int sockfd, const InetAddress &peerAddr)
     EventLoop *ioLoop = threadPool_->getNextLoop(peerAddr.toIp());
     char buf[64] = {0};
     snprintf(buf, sizeof buf, "-%s#%d", ipPort_.c_str(), nextConnId_);
-    ++nextConnId_;  // 这里没有设置为原子类是因为其只在mainloop中执行 不涉及线程安全问题
+    ++nextConnId_; // 这里没有设置为原子类是因为其只在mainloop中执行 不涉及线程安全问题
     std::string connName = name_ + buf;
 
-    LOG_INFO<<"TcpServer::newConnection ["<<name_.c_str()<<"]- new connection ["<<connName.c_str()<<"]from %s"<<peerAddr.toIpPort().c_str();
-    
+    LOG_INFO << "TcpServer::newConnection [" << name_.c_str() << "]- new connection [" << connName.c_str() << "]from %s" << peerAddr.toIpPort().c_str();
+
     // 通过sockfd获取其绑定的本机的ip地址和端口信息
     sockaddr_in local;
     ::memset(&local, 0, sizeof(local));
     socklen_t addrlen = sizeof(local);
-    if(::getsockname(sockfd, (sockaddr *)&local, &addrlen) < 0)
+    if (::getsockname(sockfd, (sockaddr *)&local, &addrlen) < 0)
     {
-        LOG_ERROR<<"sockets::getLocalAddr";
+        LOG_ERROR << "sockets::getLocalAddr";
     }
 
     InetAddress localAddr(local);
@@ -111,8 +103,7 @@ void TcpServer::removeConnection(const TcpConnectionPtr &conn)
 
 void TcpServer::removeConnectionInLoop(const TcpConnectionPtr &conn)
 {
-    LOG_INFO<<"TcpServer::removeConnectionInLoop ["<<
-             name_.c_str()<<"] - connection %s"<<conn->name().c_str();
+    LOG_INFO << "TcpServer::removeConnectionInLoop [" << name_.c_str() << "] - connection %s" << conn->name().c_str();
 
     connections_.erase(conn->name());
     EventLoop *ioLoop = conn->getLoop();

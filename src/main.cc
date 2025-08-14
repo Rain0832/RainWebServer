@@ -7,7 +7,7 @@
 #include "RainLfu.h"
 #include "Logger.h"
 #include "TcpServer.h"
-#include "memoryPool.h"
+#include "MemoryPool.h"
 
 // Logfile RollSize
 static const off_t kRollSize = 1 * 1024 * 1024;
@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
     log.start();
 
     // 2. Set up memory pool and LFU cache
-    memoryPool::HashBucket::initMemoryPool();
+    // memoryPool::HashBucket::initMemoryPool();
     const int CAPACITY = 5;
     RainCache::RainLfu<int, std::string> lfu(CAPACITY);
 
