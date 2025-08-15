@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
     log.start();
 
     // 2. Set up memory pool and LFU cache
-    // memoryPool::HashBucket::initMemoryPool();
+    RainMemoPool::MemoryPool::allocate(12);
     const int CAPACITY = 5;
     RainCache::RainLfu<int, std::string> lfu(CAPACITY);
 
