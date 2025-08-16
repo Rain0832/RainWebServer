@@ -1,55 +1,63 @@
-# kama-webserver
-【代码随想录知识星球】项目分享-webserver
+# RainWebServer
 
-## 项目介绍
+## Introduction
+This is a high-performance WEB server implemented by C++.
+It is based on the design ideas of:
+- [RainMuduo](https://github.com/Rain0832/RainModuo.git) The muduo library with most core codes
+- Multi-Threaded Multi-Reactor Network Model
 
-本项目是一个高性能的WEB服务器，使用C++实现，项目底层采用了muduo库核心的设计思想，多线程多Reactor的网络模型，并且在这基础上增加了内存池，高效的双缓冲异步日志系统，以及LFU的缓存。
+It is further enhanced with the：
+- [RainMemoPool](https://github.com/Rain0832/RainMemoPool.git): a three-level memory pool module
+- [RainLog](https://github.com/Rain0832/RainLog.git): a double-buffer asynchronous log system
+- [RainCache](https://github.com/Rain0832/RainCache.git): a LfuCache cache module
 
-## 开发环境
+## Development Environment
+* WSL Version: 2.4.12.0
+* Windows Version: 10.0.26100.4946
+* Linux version 5.15.167.4-microsoft-standard-WSL2 (root@f9c826d3017f) 
+* gcc (GCC) 11.2.0, GNU ld (GNU Binutils) 2.37 #1 SMP Tue Nov 5 00:21:55 UTC 2024
+* Destribution: Ubuntu 24.04.2 LTS
+* cmake version 4.0.2
 
-* linux kernel version5.15.0-113-generic (ubuntu 22.04.6)
-* gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0
-* cmake version 3.22
-
-## 目录结构
-
+## Directory Structure
 ```shell
-kama-webserver/
-├── img/ #存放图片
-├── include/ #所有头文件.h位置
-├── lib/ #存放共享库
-|
-├── log/ # 日志管理模块
-│ ├── log.cc # 日志实现
-├── memory/ # 内存管理模块
-│ ├── memory.cc # 内存管理实现
-├── src/ # 源代码目录
-│ ├── main.cpp # 主程序入口
-│ ├── ... # 其他源文件 
-|
-├── CMakeLists.txt # CMake 构建文件
-├── LICENSE # 许可证文件
-└── README.md # 项目说明文件
+RainWebServer
+├── CMakeLists.txt      # Project main CMakeLists.txt file
+├── Doxyfile            # Project Doxygen configuration file
+├── LICENSE             # Project license file
+├── README.md           # Project introduction file
+├── docs                # Project documentation directory
+├── img                 # Project image directory (be used in README.md)
+├── include             # Project header files directory
+│   ├── log             # RainLog modul header files directory
+│   ├── memory          # RainMemoPool modul header files directory
+│   ├── net             # Network modul header files directory
+│   └── util            # Utility header files directory
+├── lib                 # Project library directory
+└── src                 # Project source files directory
+    ├── log             # RainLog modul source files directory
+    ├── main.cc         # Main program source file
+    ├── memory          # RainMemoPool modul source files directory
+    ├── net             # Network modul source files directory
+    └── util            # Utility source files directory
 ```
 
-## 前置工具准备
-
-安装基本工具
+## Preparation
+Install basic tools:
 
 ```bash
 sudo apt-get update
 sudo apt-get install -y wget cmake build-essential unzip git
 ```
 
-## 编译指令
-1. 克隆项目：
+## Build Instruction
+1. Clone the project
 ```bash
-   git clone https://github.com/youngyangyang04/kama-webserver.git
-   cd kama-webserver
+   git clone https://github.com/Rain0832/RainWebServer.git
+   cd RainWebServer
 ```
 
-2. 创建构建目录并编译：
-
+2. Create build directory and compile
 ```bash
    mkdir build &&
    cd build &&
@@ -57,109 +65,98 @@ sudo apt-get install -y wget cmake build-essential unzip git
    make -j ${nproc}
 ```
 
-3. 在构建完成后，先进入到bin文件
-
+3. Enter the bin directory
 ```bash
 cd bin
 ```
 
-4. 启动项目可执行程序main
-
+4. Run the executable program
 ```bash
 ./main 
 ```
 
-**注意**：需要再另外开一个新窗口运行`nc 127.0.0.1 8080`启动我们的客户端，来链接main可执行程序启动的web服务器
+**NOTE**: You need to run `nc 127.0.0.1 8080` in another terminal to start the client to link the web server started by the main executable program.
 
-## 运行结果
-通过运行项目中bin文件下可执行程序main，会出现如下结果：
+## Run Result
+After running the executable program `main` in the `bin` directory, the following result will be displayed:
 
-其中日志文件将存放bin文件下的 `logs` 目录中，每次运行程序时，都会生成新的日志文件，记录程序的运行状态和错误信息。
+The log file will be saved in the `logs` directory under the `bin` file. Each time the program is run, a new log file is generated, which records the running status and error information of the program.
 
-- 服务器的，运行结果如图
+- Server running result
 
 ![img](./img/1.png)
 
-- 客户端的，运行结果如图
+- Client running result
  
 ![img](./img/2.png)
 
-**注意**：测试的结果还是采用回声服务器测试,注重架构的实现。
+**NOTE**: The test result is still based on the echo server, focusing on the implementation of the architecture.
 
----
-
-### 日志核心内容简单分析：
-
-首先日志结果如图：
+### Log File Analysis
 ![img](./img/3.png)
 
-1. 文件描述符统计
-
+1. File Descriptor Statistics
 ```bash
 2025/01/24 17:40:240290 INFO  fd total count:1 - EPollPoller.cc:32
 ```
 
-- 说明： EPoll 当前管理的文件描述符总数为 1（可能是一个连接的套接字）。
+- EPoll current managing file descriptor count: 1.
 
-2. 事件触发
-
+2. Event Handling
 ```bash
 2025/01/24 17:40:454794 INFO  %d events happend1 - EPollPoller.cc:40
 2025/01/24 17:40:454852 INFO  channel handleEvent revents:1 - Channel.cc:73
 ```
 
-- 一个事件发生（events happend1），可能是客户端套接字的关闭事件。
-- revents:1 表示触发的事件类型为 EPOLLIN，即对端关闭了连接或者发送了数据。
+- An event occurs (events happend1), which may be the closing of the client socket.
+- revents:1 indicates that the triggered event type is EPOLLIN, which means that the opposite end has closed the connection or sent data.
 
-3. 连接关闭处理
-
+3. Connection closed handling
 ```bash
 2025/01/24 17:40:454890 INFO  TcpConnection::handleClose fd=13state=2 - TcpConnection.cc:241
 2025/01/24 17:40:454907 INFO  func =>fd13events=0index=1 - EPollPoller.cc:66
 2025/01/24 17:40:454929 INFO  Connection DOWN :127.0.0.1:47376 - main.cc:44
 ```
-- TcpConnection::handleClose: 文件描述符 fd=13 的连接关闭，当前状态 state=2（可能表示“已建立连接”状态）。
-- Connection DOWN: 与客户端 127.0.0.1:47376 的连接断开。
-- events=0: 表示该文件描述符不再监听任何事件。
 
-4. 从服务器中移除连接
+- TcpConnection::handleClose: The server handles the closure of the connection, where fd=13 is the file descriptor for the client connection.
+- Connection DOWN: The connection with the client 127.0.0.1:47376 is down.
+- events=0: Indicates that the file descriptor is no longer listening for any events.
 
+4. Remove connection from server
 ```bash 
 2025/01/24 17:40:455009 INFO  TcpServer::removeConnectionInLoop [EchoServer] - connection %sEchoServer-127.0.0.1:8080#1 - TcpServer.cc:114
 2025/01/24 17:40:455138 INFO  removeChannel fd=13 - EPollPoller.cc:102
 ```
-- TcpServer::removeConnectionInLoop: 服务器内部移除与连接 127.0.0.1:47376 的绑定。
-- removeChannel: 从 EPoll 的事件监听列表中移除了文件描述符 fd=13。
+- TcpServer::removeConnectionInLoop: The server removes the connection from its internal management, where 127.0.0.1:47376 is the client connection.
+- removeChannel: The file descriptor fd=13 is removed from the EPoll event listening list.
 
-5. 资源清理
-
+5. Resource release
 ```bash 
 2025/01/24 17:40:455155 INFO  TcpConnection::dtor[EchoServer-127.0.0.1:8080#1]at fd=13state=0 - TcpConnection.cc:58
 ```
-- 调用 TcpConnection 析构函数（dtor），释放连接的相关资源。
-- 状态 state=0 表示连接已完全关闭，文件描述符 fd=13 被销毁。
+- Call TcpConnection::dtor: The server releases the connection's related resources, where fd=13 is the file descriptor for the client connection.
+- state=0: Indicates that the connection has been completely closed, and the file descriptor fd=13 has been destroyed.
 
 
-## 功能模块划分
+## Functionality Module
 
-### 网络模块
+### Network Module
+- **Event Loop Polling Module && Event Dispatching**: `EventLoop.*`, `Channel.*`, `Poller.*`, `EPollPoller.*` Responsible for event loop polling and event dispatching. `EventLoop` responsible for event loop management, `Poller`Responsible for event loop polling, `Channel`Responsible for event dispatching,`EPollPoller` implements the epoll-based event loop model.
+- **Thread and Event Loop Binding**：`Thread.*`, `EventLoopThread.*`, `EventLoopThreadPool.*` Responsible for binding threads and event loops, achieving the `one loop per thread` model.
+- **Network Connection Module**: `TcpServer.*`, `TcpConnection.*`, `Acceptor.*`, `Socket.*` Implement the `mainloop` response to network connections, and distribute them to `subloop`.
+- **Buffer Module**: `Buffer.*` Provide automatic expansion buffer, ensuring data is received in order.
 
-- **事件轮询与分发模块**：`EventLoop.*`、`Channel.*`、`Poller.*`、`EPollPoller.*`负责事件轮询检测，并实现事件分发处理。`EventLoop`对`Poller`进行轮询，`Poller`底层由`EPollPoller`实现。
-- **线程与事件绑定模块**：`Thread.*`、`EventLoopThread.*`、`EventLoopThreadPool.*`绑定线程与事件循环，完成`one loop per thread`模型。
-- **网络连接模块**：`TcpServer.*`、`TcpConnection.*`、`Acceptor.*`、`Socket.*`实现`mainloop`对网络连接的响应，并分发到各`subloop`。
-- **缓冲区模块**：`Buffer.*`提供自动扩容缓冲区，保证数据有序到达。
+### Logger Module
+- The logger module is responsible for recording important information during the running of the server, which helps developers for debugging and performance analysis. The log file is saved in the `bin/logs/` directory.
 
-### 日志模块
+### Memory Module
+- The memory management module is responsible for dynamic memory allocation and release, ensuring the stability and performance of the server under high load.
 
-- 日志模块负责记录服务器运行过程中的重要信息，帮助开发者进行调试和性能分析。日志文件存放位于 `bin/logs/` 目录下。
+### LFU Cache Module
+- The LfuCache module is used to determine which content to delete when the cache capacity is insufficient. The core idea of LFU is to remove the cache item with the lowest usage frequency.
 
-### 内存管理
+### Utility Classes Module
+- C++ server development common tools class.
 
-- 内存管理模块负责动态内存的分配和释放，确保服务器在高负载情况下的稳定性和性能。
-
-### LFU缓存模块
-- 用于在缓存容量不足时决定删除哪些内容以释放空间。LFU 的核心思想是优先移除使用频率最低的缓存项。
-
-## 贡献
-
-欢迎任何形式的贡献！请提交问题、建议或代码请求。
+## Contribution
+Welcome to any form of contribution! Please submit issues, suggestions or code requests.
