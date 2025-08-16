@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "Timestamp.h"
-#include "noncopyable.h"
+#include "Noncopyable.h"
 
 class Channel;
 class EventLoop;
