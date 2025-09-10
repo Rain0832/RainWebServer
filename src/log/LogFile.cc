@@ -1,14 +1,15 @@
 #include "LogFile.h"
+
 LogFile::LogFile(const std::string &basename,
                  off_t rollsize,
                  int flushInterval,
-                 int checkEveryN ) : basename_(basename),
-                                           rollsize_(rollsize),
-                                           flushInterval_(flushInterval),
-                                           checkEveryN_(checkEveryN),
-                                           startOfPeriod_(0),
-                                           lastRoll_(0),
-                                           lastFlush_(0)
+                 int checkEveryN) : basename_(basename),
+                                    rollsize_(rollsize),
+                                    flushInterval_(flushInterval),
+                                    checkEveryN_(checkEveryN),
+                                    startOfPeriod_(0),
+                                    lastRoll_(0),
+                                    lastFlush_(0)
 {
     // 重新启动时，可能没有log文件，因此在构建logFile对象，直接调用rollfile()创建一个新的log文件
     rollFile();
@@ -88,4 +89,3 @@ void LogFile::appendInlock(const char *data, int len)
         file_->flush();
     }
 }
-
