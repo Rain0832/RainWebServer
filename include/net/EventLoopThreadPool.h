@@ -11,6 +11,9 @@
 class EventLoop;
 class EventLoopThread;
 
+/**
+ * @brief A thread pool that manages a set of EventLoopThread.
+ */
 class EventLoopThreadPool : Noncopyable
 {
 public:
@@ -19,8 +22,18 @@ public:
     EventLoopThreadPool(EventLoop *baseLoop, const std::string &nameArg);
     ~EventLoopThreadPool();
 
+    /**
+     * @brief Set the number of threads in the thread pool.
+     *
+     * @param The number of threads in the thread pool.
+     */
     void setThreadNum(int numThreads) { numThreads_ = numThreads; }
 
+    /**
+     * @brief Start a Thread in the thread pool.
+     *
+     * @param The thread init callback function.
+     */
     void start(const ThreadInitCallback &cb = ThreadInitCallback());
 
     // If work in multi-threads, baseLoop_ (mainLoop) will distribute Channel to subLoop by poll
