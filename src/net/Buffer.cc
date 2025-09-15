@@ -10,14 +10,14 @@ ssize_t Buffer::readFd(int fd, int *saveErrno)
 {
     char extrabuf[65536] = {0}; ///< Stack memory space 65536/1024 = 64KB
 
-    /* struct_iovec.h
-    struct iovec
-    {
-        ptr_t iov_base; // iov_base buffer save readv or writev
-        size_t iov_len;
-    };
-    */
-
+    /**
+     * struct_iovec.h
+     * struct iovec
+     * {
+     *      ptr_t iov_base; // iov_base buffer save readv or writev
+     *      size_t iov_len;
+     * };
+     */
     struct iovec vec[2];
     const size_t writable = writableBytes();
 
