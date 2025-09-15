@@ -71,11 +71,11 @@ void EPollPoller::updateChannel(Channel *channel)
             int fd = channel->fd();
             channels_[fd] = channel;
         }
-        // else index == kDeleted
+        /// else index == kDeleted
         channel->set_index(kAdded);
         update(EPOLL_CTL_ADD, channel);
     }
-    else // Channel already registered  in Poller
+    else ///< Channel already registered  in Poller
     {
         int fd = channel->fd();
         if (channel->isNoneEvent())
@@ -111,11 +111,10 @@ void EPollPoller::fillActiveChannels(int numEvents, ChannelList *activeChannels)
     {
         Channel *channel = static_cast<Channel *>(events_[i].data.ptr);
         channel->set_revents(events_[i].events);
-        activeChannels->push_back(channel); // EventLoop get all active channels from Poller
+        activeChannels->push_back(channel); ///< EventLoop get all active channels from Poller
     }
 }
 
-// Update epoll_event(add/mod/del)
 void EPollPoller::update(int operation, Channel *channel)
 {
     epoll_event event;
