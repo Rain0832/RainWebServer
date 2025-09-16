@@ -67,32 +67,27 @@ void EventLoop::loop()
 
     while (!quit_)
     {
-        activeChannels_.clear(); // Clear last time active channels
+        activeChannels_.clear(); ///< Clear last time active channels
 
-        // Get active channels(event happened) from Poller
+        /// Get active channels(event happened) from Poller
         pollRetureTime_ = poller_->poll(kPollTimeMs, &activeChannels_);
 
         for (Channel *channel : activeChannels_)
         {
-            // Poller listen which channel has event,
-            // and report to EventLoop to notify channel to handle the event
+            /// Poller listen channel that has event, and report to EventLoop to notify channel to handle
             channel->handleEvent(pollRetureTime_);
         }
-        // Call back operation(thread num >= 2, mainloop/mainReactor):
-        // accept return connfd => pack connfd to Channel => TcpServer::newConnection allocate TcpConnection to subloop
-        // mainloop call queueInLoop to add callback to subloop(callback need subloop execute, but subloop still in poller_->poll)
+        /**
+         * Call back operation(thread num >= 2, mainloop/mainReactor):
+         * accept return connfd => pack connfd to Channel => TcpServer::newConnection allocate TcpConnection to subloop
+         * mainloop call queueInLoop to add callback to subloop(callback need subloop execute, but subloop still in poller_->poll)
+         */
         doPendingFunctors();
     }
     LOG_INFO << "EventLoopstop looping";
     looping_ = false;
 }
 
-// Quit the EventLoop
-// 1. If called in the self thread: thread has finished executing the loop() function, the poller_->poll has exited.
-// 2. If called in the other thread: needs to wake up the epoll_wait of the thread of the EventLoop
-//
-// For example, when subloop(worker) calls mainloop(IO)'s quit(), needs to wake up the mainloop(IO)'s poller_->poll to execute the loop() function.
-// Note: In normal cases, the mainloop(IO) is responsible for requesting connections and the callback function is written to the subloop(worker) by the producer-consumer model.
 void EventLoop::quit()
 {
     quit_ = true;
@@ -110,7 +105,7 @@ void EventLoop::runInLoop(Functor cb)
     {
         cb();
     }
-    else // Not in current loop, wake up EventLoop thread to execute callback
+    else ///< Not in current loop, wake up EventLoop thread to execute callback
     {
         queueInLoop(cb);
     }
@@ -123,12 +118,10 @@ void EventLoop::queueInLoop(Functor cb)
         pendingFunctors_.emplace_back(cb);
     }
 
-    // if the current loop is not in the thread of itself
-    // or
-    // if it is executing callback functions,
+    /// if the current loop is not in the thread of itself or if it is executing callback functions,
     if (!isInLoopThread() || callingPendingFunctors_)
     {
-        wakeup(); // Wake up loop thread
+        wakeup(); ///< Wake up loop thread
     }
 }
 
@@ -169,20 +162,19 @@ bool EventLoop::hasChannel(Channel *channel)
 
 void EventLoop::doPendingFunctors()
 {
-    // Got todo Callbacks from other threads
+    /// Got todo Callbacks from other threads
     std::vector<Functor> functors;
     callingPendingFunctors_ = true;
 
-    // unique_lock life space
     {
-        // Lock: in case of other threads calling queueInLoop() to add callback function to pendingFunctors_
+        /// Lock: in case of other threads calling queueInLoop() to add callback function to pendingFunctors_
         std::unique_lock<std::mutex> lock(mutex_);
-        functors.swap(pendingFunctors_); // Put the pending functors to the local vector
+        functors.swap(pendingFunctors_); /// Put the pending functors to the local vector
     }
 
     for (const Functor &functor : functors)
     {
-        // Call corresponding callback function
+        /// Call corresponding callback function
         functor();
     }
 
