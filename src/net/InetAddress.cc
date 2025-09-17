@@ -5,13 +5,13 @@
 
 InetAddress::InetAddress(uint16_t port, std::string ip)
 {
-    // Clear the sockaddr_in, preventing from dirty data
+    /// Clear the sockaddr_in, preventing from dirty data
     ::memset(&addr_, 0, sizeof(addr_));
-    // Set the address family to IPv4
+    /// Set the address family to IPv4
     addr_.sin_family = AF_INET;
-    // Set the port number
-    addr_.sin_port = ::htons(port); // Local byte order to network byte order
-    // Set the IP address
+    /// Set the port number
+    addr_.sin_port = ::htons(port); ///< Local byte order to network byte order
+    /// Set the IP address
     addr_.sin_addr.s_addr = ::inet_addr(ip.c_str());
 }
 
@@ -25,7 +25,7 @@ std::string InetAddress::toIp() const
 
 std::string InetAddress::toIpPort() const
 {
-    // ip:port
+    /// format: ip:port
     char buf[64] = {0};
     ::inet_ntop(AF_INET, &addr_.sin_addr, buf, sizeof buf);
     size_t end = ::strlen(buf);

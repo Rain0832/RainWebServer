@@ -36,24 +36,35 @@ public:
      */
     void start(const ThreadInitCallback &cb = ThreadInitCallback());
 
-    // If work in multi-threads, baseLoop_ (mainLoop) will distribute Channel to subLoop by poll
+    /**
+     * @brief Get the next EventLoop in the thread pool.
+     * @details Get the hash node by key, and return the EventLoop object.
+     */
     EventLoop *getNextLoop(const std::string &key);
 
-    std::vector<EventLoop *> getAllLoops(); // 获取所有的EventLoop
+    /**
+     * @brief Get all EventLoop in the thread pool.
+     * @details If loops_ is empty, return baseLoop_, else return loops_.
+     */
+    std::vector<EventLoop *> getAllLoops();
 
-    // Check if this thread pool has started
+    /**
+     * @brief Check if this thread pool has started.
+     */
     bool started() const { return started_; }
 
-    // Get name of this thread pool
+    /**
+     * @brief Get the name of this thread pool.
+     */
     const std::string name() const { return name_; }
 
 private:
-    EventLoop *baseLoop_;                                   // User use muduo create loop if thread number == 1, use user-created loop. else create multi-EventLoop
-    std::string name_;                                      // TreadPool name, defined by user, EventLoopThread name depend on thread pool name
-    bool started_;                                          // Is thread started
-    int numThreads_;                                        // Thread number in thread pool
-    int next_;                                              // New connection come, select EventLoop index
-    std::vector<std::unique_ptr<EventLoopThread>> threads_; // IO thread list
-    std::vector<EventLoop *> loops_;                        // Thread pool's EventLoop list, point to EventLoopThread function create EventLoop object
-    ConsistentHash hash_;                                   // Consistent Hash object
+    EventLoop *baseLoop_;                                   ///< User use muduo create loop if thread number == 1, use user-created loop. else create multi-EventLoop
+    std::string name_;                                      ///< TreadPool name, defined by user, EventLoopThread name depend on thread pool name
+    bool started_;                                          ///< Is thread started
+    int numThreads_;                                        ///< Thread number in thread pool
+    int next_;                                              ///< New connection come, select EventLoop index
+    std::vector<std::unique_ptr<EventLoopThread>> threads_; ///< IO thread list
+    std::vector<EventLoop *> loops_;                        ///< Thread pool's EventLoop list, point to EventLoopThread function create EventLoop object
+    ConsistentHash hash_;                                   ///< Consistent Hash object
 };

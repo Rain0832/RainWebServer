@@ -19,13 +19,14 @@ EventLoopThread::~EventLoopThread()
 
 EventLoop *EventLoopThread::startLoop()
 {
-    thread_.start(); // Start bottom level Thread object thread_
+    thread_.start(); ///< Start bottom level Thread object thread_
 
     EventLoop *loop = nullptr;
     {
         std::unique_lock<std::mutex> lock(mutex_);
         cond_.wait(lock, [this]()
                    { return loop_ != nullptr; });
+        /// Here the cond block the thread until the loop_ is not nullptr
         loop = loop_;
     }
     return loop;
@@ -33,9 +34,8 @@ EventLoop *EventLoopThread::startLoop()
 
 void EventLoopThread::threadFunc()
 {
-    // Create a independent EventLoop object for this thread
-    // One EventLoop object per thread
-    EventLoop loop;
+    /// Create a independent EventLoop object for this thread
+    EventLoop loop; ///< One EventLoop object per thread
 
     if (callback_)
     {
@@ -47,7 +47,7 @@ void EventLoopThread::threadFunc()
         loop_ = &loop;
         cond_.notify_one();
     }
-    loop.loop(); // Execute EventLoop::loop(), set up bottom level Poller poll()
+    loop.loop(); ///< Execute EventLoop::loop(), set up bottom level Poller poll()
     std::unique_lock<std::mutex> lock(mutex_);
     loop_ = nullptr;
 }

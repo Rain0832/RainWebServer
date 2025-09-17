@@ -39,11 +39,11 @@ EventLoop *EventLoopThreadPool::getNextLoop(const std::string &key)
     size_t index = hash_.getNode(key);
     if (index >= loops_.size())
     {
-        // Handle error, such as returning baseLoop or throwing exceptions
+        /// Handle error, such as returning baseLoop or throwing exceptions
         LOG_ERROR << "EventLoopThreadPool::getNextLoop ERROR";
-        return baseLoop_; // Or return nullptr
+        return baseLoop_; ///< Or return nullptr
     }
-    return loops_[index]; // Use index to access loops_
+    return loops_[index]; ///< Use index to access loops_
 }
 
 std::vector<EventLoop *> EventLoopThreadPool::getAllLoops()

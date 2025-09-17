@@ -2,9 +2,12 @@
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
+
 #include <string>
 
-// Capsulation of socket address type
+/**
+ * @brief Capsulation of socket address type
+ */
 class InetAddress
 {
 public:
@@ -14,14 +17,29 @@ public:
     {
     }
 
-    // Convert binary IP address to string format
+    /**
+     * @brief Convert binary IP address to string format
+     */
     std::string toIp() const;
-    // Convert binary IP address and port to string format
+
+    /**
+     * @brief Convert binary IP address and port to string format
+     */
     std::string toIpPort() const;
-    // Get port number
+
+    /**
+     * @brief Convert port from network byte order to host byte order, and Get binary IP address
+     */
     uint16_t toPort() const;
 
+    /**
+     * @brief Get binary IP address and port
+     */
     const sockaddr_in *getSockAddr() const { return &addr_; }
+
+    /**
+     * @brief Set binary IP address and port
+     */
     void setSockAddr(const sockaddr_in &addr) { addr_ = addr; }
 
 private:

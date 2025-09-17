@@ -19,10 +19,17 @@ public:
                     const std::string &name = std::string());
     ~EventLoopThread();
 
+    /**
+     * @brief Start the thread and run the event loop.
+     * @details This function will create a new thread and run the event loop in it.
+     *          The event loop will be returned to the caller.
+     */
     EventLoop *startLoop();
 
 private:
-    // This function is run in the new thread created by Thread class
+    /**
+     * @brief The function that will be run in the new thread.
+     */
     void threadFunc();
 
     EventLoop *loop_;
