@@ -30,23 +30,23 @@ public:
     /**
      * @brief Return the number of bytes that can be read from the buffer(size)
      * @details It can caculate by the writeIndex_ and readIndex_,
-     * writeIndex means the position first byte where we can write data,
-     * readIndex means the position first byte where we can read data.
+     *          writeIndex means the position first byte where we can write data,
+     *          readIndex means the position first byte where we can read data.
      */
     size_t readableBytes() const { return writerIndex_ - readerIndex_; }
 
     /**
      * @brief Return the number of bytes that can be written to the buffer(size)
      * @details It can caculate by the buffer size and writeIndex_,
-     * buffer size means the total size of buffer,
-     * writeIndex means the position first byte where we can write data.
+     *          buffer size means the total size of buffer,
+     *          writeIndex means the position first byte where we can write data.
      */
     size_t writableBytes() const { return buffer_.size() - writerIndex_; }
 
     /**
      * @brief Return the number of bytes that can be prepend to the buffer(size)
      * @details It just return the readerIndex_ value,
-     * the position before readerIndex_ inthe buffer can be used to prepend data.
+     *          the position before readerIndex_ inthe buffer can be used to prepend data.
      */
     size_t prependableBytes() const { return readerIndex_; }
 
@@ -90,8 +90,8 @@ public:
     /**
      * @brief Retrieve len bytes readable data from buffer and return as string type data
      * @details First we copy len bytes data from buffer to string,
-     * use peek() to get the start address,combine with len to construct a string
-     * Then we move the readerIndex_ to len backward
+     *          use peek() to get the start address,combine with len to construct a string
+     *          Then we move the readerIndex_ to len backward
      */
     std::string retrieveAsString(size_t len)
     {
@@ -103,7 +103,7 @@ public:
     /**
      * @brief Prepend len bytes data to buffer
      * @details If the left space of buffer is not enough to prepend len bytes data,
-     * we will expand the buffer to make space.
+     *          we will expand the buffer to make space.
      */
     void ensureWritableBytes(size_t len)
     {
@@ -137,9 +137,9 @@ public:
     /**
      * @brief Read data from fd to buffer
      * @details First we define a 64KB stack extra space to store temporary data,
-     * Second define iovec vec to store buffer_ writable space and extrabuf
-     * Third use readv to read data from fd to buffer_ or extrabuf,
-     * Last use saveErrno to store the errno value if readv failed.
+     *          Second define iovec vec to store buffer_ writable space and extrabuf
+     *          Third use readv to read data from fd to buffer_ or extrabuf,
+     *          Last use saveErrno to store the errno value if readv failed.
      */
     ssize_t readFd(int fd, int *saveErrno);
 
@@ -163,9 +163,9 @@ private:
     /**
      * @brief Expand the buffer to make space for len bytes data
      * @details If the left space of buffer is not enough to prepend len bytes data,
-     * we will expand the buffer to make space.
-     * Else we will move the readable data to the front of buffer,
-     * and reset the readerIndex_ and writerIndex_ to kCheapPrepend.
+     *          we will expand the buffer to make space.
+     *          Else we will move the readable data to the front of buffer,
+     *          and reset the readerIndex_ and writerIndex_ to kCheapPrepend.
      */
     void makeSpace(size_t len)
     {
