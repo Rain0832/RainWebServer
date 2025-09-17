@@ -29,20 +29,20 @@ public:
     /**
      * @brief Set up the loop
      * @details 1. Set looping_ to true, quit_ to false
-     * 2. Clear the activeChannels_ container
-     * 3. Call poller_->poll() to get activeChannels_
-     * 4. Update pollRetureTime_ to current time point
-     * 5. Call doPendingFunctors() to execute pending callback functions
+     *          2. Clear the activeChannels_ container
+     *          3. Call poller_->poll() to get activeChannels_
+     *          4. Update pollRetureTime_ to current time point
+     *          5. Call doPendingFunctors() to execute pending callback functions
      */
     void loop();
 
     /**
      * @brief Quit the loop
      * @details 1. If called in the self thread: thread has finished executing the loop() function, the poller_->poll has exited.
-     * 2. If called in the other thread: needs to wake up the epoll_wait of the thread of the EventLoop
-     * 3. For example, when subloop(worker) calls mainloop(IO)'s quit(), needs to wake up the mainloop(IO)'s poller_->poll to execute the loop() function.
+     *          2. If called in the other thread: needs to wake up the epoll_wait of the thread of the EventLoop
+     *          3. For example, when subloop(worker) calls mainloop(IO)'s quit(), needs to wake up the mainloop(IO)'s poller_->poll to execute the loop() function.
      * @note In normal cases,
-     * the mainloop(IO) is responsible for requesting connections and the callback function is written to the subloop(worker) by the producer-consumer model.
+     *       the mainloop(IO) is responsible for requesting connections and the callback function is written to the subloop(worker) by the producer-consumer model.
      */
     void quit();
 
@@ -55,14 +55,14 @@ public:
     /**
      * @brief Run a callback function in the loop thread
      * @details If the current thread is the loop thread, the callback function is executed directly.
-     * Else, the callback function is put into the pending callback functions container and the loop thread is woken up.
+     *          Else, the callback function is put into the pending callback functions container and the loop thread is woken up.
      */
     void runInLoop(Functor cb);
 
     /**
      * @brief Queue a callback function to be executed in the loop thread
      * @details 1. Put callback function into the pending callback functions container
-     * 2. If the current thread is the loop thread, call doPendingFunctors() to execute the callback function.
+     *          2. If the current thread is the loop thread, call doPendingFunctors() to execute the callback function.
      */
     void queueInLoop(Functor cb);
 
