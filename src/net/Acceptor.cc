@@ -19,31 +19,28 @@ static int createNonblocking()
 }
 
 Acceptor::Acceptor(EventLoop *loop, const InetAddress &listenAddr, bool reuseport)
-    : loop_(loop), acceptSocket_(createNonblocking()), acceptChannel_(loop, acceptSocket_.fd()), listenning_(false)
+    : loop_(loop), acceptSocket_(createNonblocking()), acceptChannel_(loop, acceptSocket_.fd()), listening_(false)
 {
     acceptSocket_.setReuseAddr(true);
     acceptSocket_.setReusePort(true);
     acceptSocket_.bindAddress(listenAddr);
 
-    // TcpServer::start() => Acceptor.listen() if new user connection, execute a callback (accept => connfd => pack into Channel => wake up subloop)
-    // baseloop listens to an event => acceptChannel_(listenfd) => execute the callback function
     acceptChannel_.setReadCallback(std::bind(&Acceptor::handleRead, this));
 }
 
 Acceptor::~Acceptor()
 {
-    acceptChannel_.disableAll(); // Remove interest in events from Poller
-    acceptChannel_.remove();     // Call EventLoop->removeChannel => Poller->removeChannel to remove the corresponding part of the ChannelMap
+    acceptChannel_.disableAll(); ///< Remove interest in events from Poller
+    acceptChannel_.remove();     ///< Call EventLoop->removeChannel => Poller->removeChannel to remove the corresponding part of the ChannelMap
 }
 
 void Acceptor::listen()
 {
-    listenning_ = true;
-    acceptSocket_.listen();         // listen
-    acceptChannel_.enableReading(); // acceptChannel_ register to Poller !!! important !!!
+    listening_ = true;
+    acceptSocket_.listen();         ///< listen a socket
+    acceptChannel_.enableReading(); ///< acceptChannel_ register to Poller !!! important !!!
 }
 
-// listenfd have event happened - new user connection
 void Acceptor::handleRead()
 {
     InetAddress peerAddr;
@@ -52,7 +49,7 @@ void Acceptor::handleRead()
     {
         if (NewConnectionCallback_)
         {
-            NewConnectionCallback_(connfd, peerAddr); // Poller find subLoop, wake up and dispatch new client Channel
+            NewConnectionCallback_(connfd, peerAddr); ///< Poller find subLoop, wake up and dispatch new client Channel
         }
         else
         {

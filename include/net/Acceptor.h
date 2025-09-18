@@ -17,21 +17,30 @@ public:
     Acceptor(EventLoop *loop, const InetAddress &listenAddr, bool reuseport);
     ~Acceptor();
 
-    // Set new connection callback function
+    /**
+     * @brief Set new connection callback function
+     */
     void setNewConnectionCallback(const NewConnectionCallback &cb) { NewConnectionCallback_ = cb; }
 
-    // Judge whether the Acceptor is listening
-    bool listenning() const { return listenning_; }
+    /**
+     * @brief Judge whether the Acceptor is listening
+     */
+    bool listening() const { return listening_; }
 
-    // Listen local port
+    /**
+     * @brief Start listening local port
+     */
     void listen();
 
 private:
-    void handleRead(); // Process new user connection event
+    /**
+     * @brief Handle new connection event
+     */
+    void handleRead();
 
-    EventLoop *loop_;                             // Acceptor use user-defined baseLoop, also mainLoop
-    Socket acceptSocket_;                         // Accept new connection socket
-    Channel acceptChannel_;                       // Use to listen connection
-    NewConnectionCallback NewConnectionCallback_; // New connection callback
-    bool listenning_;                             // is listening now?
+    EventLoop *loop_;                             ///< Acceptor use user-defined baseLoop, also mainLoop
+    Socket acceptSocket_;                         ///< Accept new connection socket
+    Channel acceptChannel_;                       ///< Use to listen connection
+    NewConnectionCallback NewConnectionCallback_; ///< New connection callback
+    bool listening_;                              ///< is it listening now?
 };
